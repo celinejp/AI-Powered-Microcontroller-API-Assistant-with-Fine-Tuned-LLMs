@@ -404,6 +404,19 @@ training/data/*/cache-*
 training/data/*/data-*
 training/data/*/state.json
 
+# Additional cleanup patterns
+**/.DS_Store
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.log
+**/*.tmp
+**/*.temp
+**/*.swp
+**/*.swo
+**/*~
+**/.env
+
 # Cache directories
 .cache/
 cache/

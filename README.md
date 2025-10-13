@@ -2,7 +2,7 @@
 
 An AI-powered tool that generates accurate SDK-compliant API syntax and usage examples for microcontroller peripherals (UART, SPI, GPIO, I2C).
 
-## 🎯 Project Overview
+## Project Overview
 
 This project provides an intelligent assistant that helps developers generate correct API calls and usage examples for microcontroller peripherals. It uses fine-tuned language models to ensure accuracy and compliance with various SDK specifications.
 
@@ -13,7 +13,7 @@ This project provides an intelligent assistant that helps developers generate co
 - **Web Interface**: Simple React-based UI for easy interaction
 - **Fine-tuned Models**: Custom models trained on microcontroller API datasets
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 Microcontroller-API-Assistant/
@@ -24,7 +24,7 @@ Microcontroller-API-Assistant/
 └── docker/           # Containerization setup
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Python 3.9+
@@ -79,7 +79,7 @@ poetry install
 - **Usage Examples**: How-to guides for different peripherals
 - **Architecture Docs**: System design and implementation details
 
-## 🔧 Technology Stack
+## Technology Stack
 
 ### Backend
 - **FastAPI**: Modern Python web framework
@@ -100,14 +100,14 @@ poetry install
 - **Datasets**: Data processing and management
 - **Wandb**: Experiment tracking (optional)
 
-## 📊 Supported Peripherals
+## Supported Peripherals
 
 - **UART**: Universal Asynchronous Receiver-Transmitter
 - **SPI**: Serial Peripheral Interface
 - **GPIO**: General Purpose Input/Output
 - **I2C**: Inter-Integrated Circuit
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -115,11 +115,11 @@ poetry install
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Hugging Face for the transformer models and training infrastructure
 - vLLM team for the high-performance inference engine
