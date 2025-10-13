@@ -53,7 +53,7 @@ poetry install
 # Follow training/README.md for detailed instructions
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ### Backend (`/backend`)
 - **FastAPI Application**: REST API endpoints for code generation
@@ -106,22 +106,3 @@ poetry install
 - **SPI**: Serial Peripheral Interface
 - **GPIO**: General Purpose Input/Output
 - **I2C**: Inter-Integrated Circuit
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Hugging Face for the transformer models and training infrastructure
-- vLLM team for the high-performance inference engine
-- Triton team for GPU optimization capabilities
-- The open-source microcontroller community for API examples and documentation
