@@ -1,0 +1,71 @@
+{
+  "builder_name": "json",
+  "citation": "",
+  "config_name": "default",
+  "dataset_name": "json",
+  "dataset_size": 187301,
+  "description": "",
+  "download_checksums": {
+    "/Users/CelineJohnPhilip/Microcontroller-API-Assistant/training/data/micro_api_dataset.jsonl": {
+      "num_bytes": 218521,
+      "checksum": null
+    }
+  },
+  "download_size": 218521,
+  "features": {
+    "instruction": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "output": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "metadata": {
+      "peripheral": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "microcontroller": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "language": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "source_url": {
+        "dtype": "string",
+        "_type": "Value"
+      },
+      "tags": {
+        "feature": {
+          "dtype": "string",
+          "_type": "Value"
+        },
+        "_type": "Sequence"
+      },
+      "title": {
+        "dtype": "string",
+        "_type": "Value"
+      }
+    }
+  },
+  "homepage": "",
+  "license": "",
+  "size_in_bytes": 405822,
+  "splits": {
+    "train": {
+      "name": "train",
+      "num_bytes": 187301,
+      "num_examples": 220,
+      "dataset_name": "json"
+    }
+  },
+  "version": {
+    "version_str": "0.0.0",
+    "major": 0,
+    "minor": 0,
+    "patch": 0
+  }
+}
