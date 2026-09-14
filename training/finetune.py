@@ -356,9 +356,12 @@ class RealTrainingManager:
             # Step 5: Save model
             step_start = time.time()
             logger.info("Step 5: Saving model...")
-            final_model_path = self._save_final_model(model, tokenizer)
+            final_model_path = self._save_final_model(trainer, tokenizer)
             logger.info(f"⏱ Model saving took: {time.time() - step_start:.2f}s")
-            
+
+            # Step 5.5: Save training metrics and plots
+            self.save_training_metrics(trainer, overall_start)
+
             # Step 6: Push to hub (if enabled)
             if self.config.push_to_hub:
                 step_start = time.time()
@@ -431,10 +434,18 @@ class RealTrainingManager:
         )
         return trainer
     
-    def _save_final_model(self, model, tokenizer):
-        """Helper to save the final model and tokenizer."""
+    def _save_final_model(self, trainer, tokenizer):
+        """Merge the LoRA adapter into the base model and save a standalone,
+        directly-loadable checkpoint (so the serving backend's plain
+        AutoModelForCausalLM.from_pretrained() can load it with no extra code)."""
         final_model_path = self.output_dir / "final_model"
-        trainer.save_model(str(final_model_path))
+
+        model_to_save = trainer.model
+        if hasattr(model_to_save, "merge_and_unload"):
+            logger.info("Merging LoRA adapter into base model weights...")
+            model_to_save = model_to_save.merge_and_unload()
+
+        model_to_save.save_pretrained(str(final_model_path))
         tokenizer.save_pretrained(str(final_model_path))
         return final_model_path
     
@@ -545,7 +556,10 @@ class RealTrainingManager:
                 text = f"Instruction: {instruction}\nOutput: {output}\n"
                 texts.append(text)
             
-            # Tokenize the texts
+            # Tokenize the texts. Labels are intentionally NOT set here -
+            # DataCollatorForLanguageModeling(mlm=False) derives them from the
+            # padded input_ids at batch-collation time; pre-setting them here
+            # feeds it a ragged, unpadded field that later crashes torch.tensor().
             tokenized = tokenizer(
                 texts,
                 truncation=True,
@@ -553,10 +567,7 @@ class RealTrainingManager:
                 max_length=self.config.max_length,
                 return_tensors=None,
             )
-            
-            # Set labels to input_ids for causal language modeling
-            tokenized["labels"] = tokenized["input_ids"].copy()
-            
+
             return tokenized
         
         # Apply tokenization to both train and validation datasets

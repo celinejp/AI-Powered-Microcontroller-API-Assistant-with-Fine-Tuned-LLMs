@@ -1,108 +1,106 @@
-# Microcontroller API Assistant Using Fine-Tuned LLMs
+# Microcontroller API Assistant
 
-An AI-powered tool that generates accurate SDK-compliant API syntax and usage examples for microcontroller peripherals (UART, SPI, GPIO, I2C).
+An AI-assisted tool that generates example API code for microcontroller peripherals (UART, SPI, GPIO, I2C), built around a LoRA-fine-tuned language model served through a FastAPI backend and a React web interface.
 
-## Project Overview
+## Status (as of 2026-09-13)
 
-This project provides an intelligent assistant that helps developers generate correct API calls and usage examples for microcontroller peripherals. It uses fine-tuned language models to ensure accuracy and compliance with various SDK specifications.
+This project has a working, verified fine-tuning pipeline and a real backend/frontend serving loop — but is **not production-ready**. Specifics:
 
-### Features
-- **Multi-Peripheral Support**: UART, SPI, GPIO, I2C
-- **SDK Compliance**: Generates code that follows specific SDK guidelines
-- **Real-time Inference**: Fast response times using vLLM optimization
-- **Web Interface**: Simple React-based UI for easy interaction
-- **Fine-tuned Models**: Custom models trained on microcontroller API datasets
+- ✅ **Fine-tuning is real.** A LoRA fine-tune of `microsoft/DialoGPT-medium` was run end-to-end on the bundled 224-example dataset (3 epochs, 33 steps). Eval loss fell monotonically (9.56 → 9.09 → 7.89) — genuine, measured learning.
+- ✅ **The API genuinely serves the fine-tuned model.** `POST /generate-code` calls real inference first and only falls back to a template response on failure or empty output.
+- ✅ **Inference latency optimizations are real and measured on CPU/Apple Silicon (MPS):** KV-caching + half precision cut generation latency by 66–79% versus a naive no-cache baseline (see [Verified results](#verified-results)).
+- ⚠️ **Generated code is not yet coherent** at the current training budget. `DialoGPT-medium` has no code pretraining, and 33 steps on 179 examples isn't enough signal to produce reliable SDK-compliant snippets. More training and/or a stronger base model would be the next step — see [Known limitations](#known-limitations).
+- ⚠️ **vLLM / Triton / FlashAttention 2** integrations exist in code but are CUDA-only; they are not installed or exercised in this environment (no NVIDIA GPU). 4-bit quantization (bitsandbytes) is likewise CUDA-only and correctly disabled off-GPU.
+- ⚠️ **Only 3 of 7 advertised boards have full input validation** (Arduino, ESP32, STM32). Raspberry Pi Pico, Nordic nRF, TI MSP430, and Atmel AVR are defined in the API's type system but rejected by the request validator today.
+
+## Features
+
+- **Multi-peripheral support**: UART, SPI, GPIO, I2C
+- **Fine-tuned inference**: real LoRA-adapted model generation, with a template-based fallback for reliability
+- **Web interface**: React + TypeScript UI for peripheral/board/language selection and code display
+- **Live performance dashboard**: request count, average/p50/p95 latency, throughput, token counts
 
 ## Architecture
 
 ```
 Microcontroller-API-Assistant/
-├── backend/           # FastAPI server with vLLM inference
-├── frontend/          # React web interface
-├── training/          # Model fine-tuning scripts
-├── docs/             # Documentation and guides
-└── docker/           # Containerization setup
+├── backend/           # FastAPI server + inference engine (HF Transformers, optional vLLM)
+├── frontend/          # React + TypeScript web interface
+├── training/          # LoRA fine-tuning pipeline and dataset
+├── qa_system/         # Automated code-quality evaluation harness
+└── tests/             # Backend/inference test suite
 ```
 
-## Quick Start
+## Quick start
 
 ### Prerequisites
-- Python 3.9+
+- Python 3.9–3.12 (3.13 is not yet supported by the Poetry environments)
 - Node.js 18+
-- Poetry (for Python dependency management)
+- Poetry
 - Docker (optional, for containerized deployment)
 
-### Backend Setup
+### Backend
 ```bash
 cd backend
 poetry install
 poetry run python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Frontend Setup
+### Frontend
 ```bash
 cd frontend
 npm install
 npm start
 ```
 
-### Training Setup
+### Fine-tuning (optional — a base checkpoint is not required to run the app; it falls back to templates)
 ```bash
 cd training
 poetry install
-# Follow training/README.md for detailed instructions
+poetry run python finetune.py \
+  --model microsoft/DialoGPT-medium \
+  --dataset-path data/micro_api_dataset.jsonl \
+  --output-dir real_checkpoints_run1 \
+  --hub-repo-id local/not-used \
+  --epochs 3 --max-steps -1 --save-steps 10 --eval-steps 10 \
+  --no-wandb --no-push
 ```
+Copy the resulting `real_checkpoints_run1/final_model/` into `backend/checkpoints/mcu-llm/<name>/` — the backend auto-detects the most recently modified subdirectory there on startup.
 
-## Project Structure
+## Technology stack
 
-### Backend (`/backend`)
-- **FastAPI Application**: REST API endpoints for code generation
-- **vLLM Integration**: Optimized model inference server
-- **Hugging Face Integration**: Model loading and management
-- **Triton Optimization**: Kernel-level performance optimization
+| Layer | Tools | Notes |
+|---|---|---|
+| Backend | FastAPI, Hugging Face Transformers | Async API, real model inference |
+| Fine-tuning | PEFT (LoRA), bitsandbytes (4-bit) | LoRA runs anywhere; 4-bit quantization is CUDA-only |
+| Optional GPU serving | vLLM, Triton, flash-attn | CUDA-only, present in code, unused without an NVIDIA GPU |
+| Frontend | React, TypeScript, Tailwind CSS, Axios | Typed UI and API client |
+| Packaging | Poetry, Docker/docker-compose | |
 
-### Frontend (`/frontend`)
-- **React Application**: Modern web interface
-- **Peripheral Selection**: Dropdown-based UI for peripheral types
-- **Code Display**: Syntax-highlighted code snippets
-- **Real-time Generation**: Instant API code generation
+## Supported peripherals
 
-### Training (`/training`)
-- **Dataset Preparation**: Scripts for preparing training data
-- **Fine-tuning Pipeline**: Hugging Face-based model training
-- **Evaluation Tools**: Model performance assessment
-- **Data Collection**: Utilities for gathering API examples
+UART, SPI, GPIO, I2C.
 
-### Documentation (`/docs`)
-- **API Documentation**: Backend API reference
-- **Setup Guides**: Detailed installation instructions
-- **Usage Examples**: How-to guides for different peripherals
-- **Architecture Docs**: System design and implementation details
+## Supported microcontrollers
 
-## Technology Stack
+Declared in the API type system: Arduino Uno, ESP32, STM32, Raspberry Pi Pico, Nordic nRF, TI MSP430, Atmel AVR. **Request validation currently only covers Arduino, ESP32, and STM32** (see Known limitations).
 
-### Backend
-- **FastAPI**: Modern Python web framework
-- **vLLM**: High-performance LLM inference
-- **Hugging Face Transformers**: Model loading and fine-tuning
-- **Triton**: GPU kernel optimization
-- **Poetry**: Dependency management
+## Verified results
 
-### Frontend
-- **React**: Modern JavaScript framework
-- **TypeScript**: Type-safe development
-- **Tailwind CSS**: Utility-first styling
-- **Axios**: HTTP client for API calls
+Run on Apple Silicon (CPU/MPS), no CUDA GPU:
 
-### Training
-- **Hugging Face**: Model training and dataset management
-- **PyTorch**: Deep learning framework
-- **Datasets**: Data processing and management
-- **Wandb**: Experiment tracking (optional)
+| Benchmark | Result |
+|---|---|
+| Fine-tuning eval loss (3 epochs, 33 steps) | 9.56 → 9.09 → 7.89 |
+| Inference latency, naive vs. KV-cache | −66.1% |
+| Inference latency, naive vs. KV-cache + fp16/MPS | −79.2% |
+| Fused attention (`torch.nn.functional.scaled_dot_product_attention`) vs. naive attention | 1.6× (CPU), 1.58× (MPS) |
 
-## Supported Peripherals
+Reproduce the latency numbers with `backend/benchmark_latency.py`.
 
-- **UART**: Universal Asynchronous Receiver-Transmitter
-- **SPI**: Serial Peripheral Interface
-- **GPIO**: General Purpose Input/Output
-- **I2C**: Inter-Integrated Circuit
+## Known limitations
+
+- Generated code quality is early-stage — see [Status](#status-as-of-2026-09-13) above. This is a training-budget/base-model limitation, not a broken pipeline.
+- `backend/app/validators.py` only has capability profiles for 3 of the 7 microcontrollers the API declares support for.
+- 4-bit quantization and the vLLM/Triton/flash-attn serving path require an NVIDIA GPU and are untested in this environment.
+- No user analytics, feedback collection, or production auth — this is a research/development-stage project.

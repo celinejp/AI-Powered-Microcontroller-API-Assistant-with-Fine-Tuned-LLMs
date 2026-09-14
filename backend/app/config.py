@@ -71,7 +71,11 @@ class Settings(BaseSettings):
             # Find the most recent checkpoint
             checkpoints = []
             for item in checkpoint_dir.iterdir():
-                if item.is_dir() and ((item / "pytorch_model.bin").exists() or (item / "adapter_model.safetensors").exists()):
+                if item.is_dir() and (
+                    (item / "pytorch_model.bin").exists()
+                    or (item / "adapter_model.safetensors").exists()
+                    or (item / "model.safetensors").exists()
+                ):
                     checkpoints.append(item)
             
             if checkpoints:
@@ -82,7 +86,11 @@ class Settings(BaseSettings):
                 return
         
         # Check if the final model exists
-        if fine_tuned_path.exists() and ((fine_tuned_path / "pytorch_model.bin").exists() or (fine_tuned_path / "adapter_model.safetensors").exists()):
+        if fine_tuned_path.exists() and (
+            (fine_tuned_path / "pytorch_model.bin").exists()
+            or (fine_tuned_path / "adapter_model.safetensors").exists()
+            or (fine_tuned_path / "model.safetensors").exists()
+        ):
             self.active_model_path = self.model_path
             logger.info(f"[USING FINETUNED MODEL] Loaded final model: {self.active_model_path}")
             return

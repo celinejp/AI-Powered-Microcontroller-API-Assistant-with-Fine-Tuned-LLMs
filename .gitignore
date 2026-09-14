@@ -399,6 +399,11 @@ models--*/
 **/snapshots/
 **/.no_exist/
 
+# Fine-tuning run outputs and deployed checkpoints (large binaries - regenerate via training/finetune.py)
+training/real_checkpoints*/
+training/models/fine-tuned/checkpoints/
+backend/checkpoints/
+
 # Training data cache
 training/data/*/cache-*
 training/data/*/data-*

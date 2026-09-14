@@ -249,6 +249,18 @@ class DynamicInferenceEngine:
         # Parse dynamic response
         return self._parse_dynamic_response(generated_text, peripheral, microcontroller, operation, language)
     
+    # Human-readable board names matching the phrasing used in the
+    # fine-tuning dataset's instructions (see training/data/micro_api_dataset.jsonl).
+    _MCU_READABLE_NAMES = {
+        MicrocontrollerType.STM32: "STM32",
+        MicrocontrollerType.ESP32: "ESP32",
+        MicrocontrollerType.ARDUINO: "Arduino Uno",
+        MicrocontrollerType.RASPBERRY_PI_PICO: "Raspberry Pi Pico",
+        MicrocontrollerType.NORDIC_NRF: "Nordic nRF",
+        MicrocontrollerType.TI_MSP430: "TI MSP430",
+        MicrocontrollerType.ATMEL_AVR: "Atmel AVR",
+    }
+
     def _build_dynamic_prompt(
         self,
         peripheral: PeripheralType,
@@ -260,48 +272,20 @@ class DynamicInferenceEngine:
         include_comments: bool = True,
         include_error_handling: bool = True,
     ) -> str:
-        """Build dynamic prompt for model inference."""
-        
-        prompt = f"""You are an expert microcontroller API assistant. Generate accurate, SDK-compliant code for the following request:
+        """Build the model prompt.
 
-Peripheral: {peripheral.value.upper()}
-Microcontroller: {microcontroller.value.upper()}
-Operation: {operation}
-Language: {language.upper()}
-SDK Version: {sdk_version or 'latest'}
-Include Comments: {include_comments}
-Include Error Handling: {include_error_handling}
+        This MUST mirror the exact template used in training/finetune.py's
+        `_prepare_dataset` ("Instruction: {instruction}\\nOutput: {output}\\n") -
+        the fine-tune only ever saw that format, so serving a differently
+        shaped prompt (the previous verbose multi-section template) leaves
+        the fine-tuned weights unable to recognize the task and produces
+        near-empty output regardless of how well training went.
+        """
+        mcu_readable = self._MCU_READABLE_NAMES.get(microcontroller, microcontroller.value)
+        operation_readable = operation.replace("_", " ")
+        instruction = f"Show me how to {operation_readable} {peripheral.value.lower()} on {mcu_readable}"
 
-"""
-        
-        if parameters:
-            prompt += f"Parameters: {parameters}\n\n"
-        
-        prompt += f"""Generate {language} code that:
-1. Follows the {microcontroller.value.upper()} SDK conventions
-2. Implements {operation} for {peripheral.value.upper()}
-3. Includes proper error handling if requested
-4. Has clear comments explaining each step
-5. Is production-ready and follows best practices
-
-Also provide:
-- Function signature
-- Example usage
-- Required dependencies
-- Any warnings or considerations
-
-Response format:
-```{language}
-[CODE HERE]
-```
-
-Function Signature: [SIGNATURE]
-Example Usage: [EXAMPLE]
-Dependencies: [LIST]
-Warnings: [LIST]
-"""
-        
-        return prompt
+        return f"Instruction: {instruction}\nOutput:"
     
     def _parse_dynamic_response(
         self,
